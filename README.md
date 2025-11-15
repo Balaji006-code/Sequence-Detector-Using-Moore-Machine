@@ -55,72 +55,79 @@ The sequence detector should produce an output `Z = 1` whenever the input sequen
 ## **Program**
 
 ```verilog
-// Sequence Detector for "1011" using Moore Machine
-module moore_seq_detector(
-    input clk, reset, x,
-    output reg z
-);
-    // State encoding
-    parameter S0 = 3'b000,
-              S1 = 3'b001,
-              S2 = 3'b010,
-              S3 = 3'b011,
-              S4 = 3'b100;
+`timescale 1ns / 1ps
+module moore_digital(clk,rst,in,out);
+input clk,in,rst;
+output reg out;
+parameter s0=3'b000,
+s1=3'b001,
+s2=3'b010,
+s3=3'b011,
+s4=3'b100;
+reg [2:0] current_state,next_state;
+always @(posedge clk or posedge rst)
+begin
+if(rst)
+current_state<=s0;
+else
+current_state<=next_state;
+end
+always @(*)begin
+    case(current_state)
+        s0:next_state<=in?s1:s0;
+        s1:next_state<=in?s1:s2;
+        s2:next_state<=in?s3:s0;
+        s3:next_state<=in?s4:s2;
+        s4:next_state<=in?s1:s0;
+        default:next_state<=s0;
+   endcase
+end
 
-    reg [2:0] state, next_state;
-
-    // State transition logic
-  
-        endcase
-    end
+always @(*)
+begin
+    case(current_state)
+        s4:out<=1;
+        default:out<=0;
+    endcase
+end
 endmodule
 ```
 ### Testbench
-```
-module tb_moore_seq_detector;
-    reg clk, reset, x;
-    wire z;
+```verilog
+module moore_digital_tb;
+reg clk,rst,in;
+wire out;
+moore_digital uut(clk,rst,in,out);
+initial
+begin
+    clk=0;
+    forever #5clk=~clk;
+end
+initial
+begin
+rst=1;
+in=0;
+#10 rst=0;
+#10 in=1;
+#10 in=0;
+#10 in=1;
+#10 in=1;
 
-    moore_seq_detector uut(clk, reset, x, z);
-
-    // Clock generation
-    always #5 clk = ~clk;
-
-    initial begin
-        clk = 0;
-        reset = 1;
-        x = 0;
-        #10 reset = 0;
-
-        // Input sequence: 1 0 1 1 0 1 0 1 1
-        x = 1; #10;
-        x = 0; #10;
-        x = 1; #10;
-        x = 1; #10;
-        x = 0; #10;
-        x = 1; #10;
-        x = 0; #10;
-        x = 1; #10;
-        x = 1; #10;
-        #10 $finish;
-    end
-
-    initial begin
-        $monitor("Time=%0t | X=%b | Z=%b | State=%b", $time, x, z, uut.state);
-    end
+#10 rst=0;
+#10 in=1;
+#10 in=0;
+#10 in=1;
+#10 in=0;
+#20 $finish;
+end
 endmodule
 ```
 ### Simulation Output
--
--
--
--
--
--
-Paste the output here
--
--
--
+
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a09dac3b-1f95-4f06-bd53-022eded25863" />
+
+ 
 
 ### Result
 
